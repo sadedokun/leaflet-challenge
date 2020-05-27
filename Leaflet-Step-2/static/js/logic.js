@@ -1,48 +1,44 @@
 var myMap = L.map("map").setView([37.8, -96], 4);
-
+let streetmap = L.tileLayer(
+  "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}",
+  {
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery (c) <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    accessToken: API_KEY,
+  }
+);
+L.tileLayer(
+  "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+  {
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    id: "mapbox/light-v9",
+    tileSize: 512,
+    zoomOffset: -1,
+    accessToken: API_KEY,
+  }
+).addTo(myMap);
+let darkmap = L.tileLayer(
+  "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+  {
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    id: "mapbox/dark-v9",
+    tileSize: 512,
+    zoomOffset: -1,
+    accessToken: API_KEY,
+  }
+).addTo(myMap);
 // Store our API endpoint inside queryUrl
 var queryUrl =
   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson";
-
 // Perform a GET request to the query URL
 d3.json(queryUrl, function (data) {
-  // Once we get a response, send the data.features object to the createFeatures function
-  console.log(data);
-  createFeatures(data.features);
-});
-
-function createFeatures(earthquakeData) {
-  // Define streetmap layer
-  L.tileLayer(
-    "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
-    {
-      attribution:
-        'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-      maxZoom: 18,
-      id: "mapbox/light-v9",
-      tileSize: 512,
-      zoomOffset: -1,
-      accessToken: API_KEY,
-    }
-  ).addTo(myMap);
-
-  // Define darkmap layer
-  L.tileLayer(
-    "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
-    {
-      attribution:
-        'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-      maxZoom: 18,
-      id: "mapbox/dark-v9",
-      tileSize: 512,
-      zoomOffset: -1,
-      accessToken: API_KEY,
-    }
-  ).addTo(myMap);
-
-  //Array to hold circles
+  let earthquakeData = data.features;
   var myCircleArray = new Array();
-
   // Loop through the cities array and create one marker for each earthquake object
   for (var i = 0; i < earthquakeData.length; i++) {
     coordinates = [
@@ -50,7 +46,6 @@ function createFeatures(earthquakeData) {
       earthquakeData[i].geometry.coordinates[0],
     ];
     properties = earthquakeData[i].properties;
-
     var color = "#d7191c";
     if (properties.mag < 1) {
       color = "#00ccbc";
@@ -63,7 +58,6 @@ function createFeatures(earthquakeData) {
     } else if (properties.mag < 5) {
       color = "#e76818";
     }
-
     // Add circles to map
     var myCircle = L.circle(coordinates, {
       fillOpacity: 0.75,
@@ -85,28 +79,18 @@ function createFeatures(earthquakeData) {
     //Add the cricle to the array
     myCircleArray.push(myCircle);
   }
-
   //Create the layer for the circles
   var earthquakes = L.layerGroup(myCircleArray);
-
   // Define a baseMaps object to hold our base layers
   var baseMaps = {
     "Street Map": streetmap,
     "Dark Map": darkmap,
   };
-
   // Create overlay object to hold our overlay layer
   var overlayMaps = {
     Earthquakes: earthquakes,
   };
-
   // Add the layer to the map
-  var myMap = L.map("map", {
-    center: [39, 21],
-    zoom: 2.5,
-    layers: [streetmap, earthquakes],
-  });
-
   // Create a layer control
   // Pass in our baseMaps and overlayMaps
   // Add the layer control to the map
@@ -115,10 +99,8 @@ function createFeatures(earthquakeData) {
       collapsed: false,
     })
     .addTo(myMap);
-
   //create the legend
   var legend = L.control({ position: "bottomright" });
-
   legend.onAdd = function (map) {
     var div = L.DomUtil.create("div", "info legend");
     var grades = ["0-1", "1-2", "2-3", "3-4", "4-5", "5+"];
@@ -131,7 +113,6 @@ function createFeatures(earthquakeData) {
       "#e76818",
       "#d7191c",
     ];
-
     // loop through our density intervals and generate a label with a colored square for each interval
     for (var i = 0; i < grades.length; i++) {
       div.innerHTML +=
@@ -143,22 +124,18 @@ function createFeatures(earthquakeData) {
         grades[i] +
         "<p>";
     }
-
     return div;
   };
-
   //Add the legend by default
   legend.addTo(myMap);
-
   //Overlay listener for adding
   myMap.on("overlayadd", function (a) {
     //Add the legend
     legend.addTo(myMap);
   });
-
   //Overlay listener for remove
   myMap.on("overlayremove", function (a) {
     //Remove the legend
     myMap.removeControl(legend);
   });
-}
+});
